@@ -5,6 +5,7 @@
     widgets::{Block, Borders, Paragraph},
     Frame,
 };
+use ratatui::text::Line;
 use ratatui::widgets::{List, ListItem, Wrap};
 use crate::app::App;
 
@@ -35,9 +36,14 @@ pub fn ui(frame: &mut Frame, app: &App) {
         .direction(Direction::Vertical)
         .constraints(vec![
             Constraint::Percentage(25),
-            Constraint::Percentage(60),
+            Constraint::Percentage(75),
         ])
         .split(down_left_layout[0]);
+    //list
+    let list_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(vec![Constraint::Percentage(20), Constraint::Percentage(80)])
+        .split(down_left_up_layout[1]);
     // 上布局的抬头
     let title_block = Block::default()
         .title(" 工具 ")
@@ -70,29 +76,28 @@ pub fn ui(frame: &mut Frame, app: &App) {
         .block(Block::default()
         .title(" 转换结果 ")
         .title_alignment(Alignment::Center)
-        .borders(Borders::ALL))
-        .wrap(Wrap { trim: false });
+        .borders(Borders::ALL));
 
     frame.render_widget(converted_paragraph, down_left_layout[1]);
     //
-    // 在 ui 函数中
-    let down_left_up_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(vec![
-            Constraint::Percentage(20),
-            Constraint::Percentage(80),
-        ])
-        .split(down_left_layout[0]);
+    let number_items: Vec<ListItem> = (1..=8)
+        .map(|n| ListItem::new(Line::from(format!("{}", n)).alignment(Alignment::Center)))
+        .collect();
 
-    // 示例数据
+    // 创建第二个 List 小部件
+    let number_list = List::new(number_items)
+        .block(Block::default().borders(Borders::ALL));
+    frame.render_widget(number_list, list_layout[0]);
+    //
     let items = vec![
-        ListItem::new("美元 (USD)"),
-        ListItem::new("日元 (JPY)"),
-        ListItem::new("澳大利亚元 (AUD)"),
-        ListItem::new("阿根廷比索 (ARS)"),
-        ListItem::new("印度卢比 (INR)"),
-        ListItem::new("英国镑 (GBP)"),
-        ListItem::new("土耳其里拉 (TRY)"),
+        ListItem::new(Line::from("人民币 (RMB)").alignment(Alignment::Center)),
+        ListItem::new(Line::from("美元 (USD)").alignment(Alignment::Center)),
+        ListItem::new(Line::from("日元 (JPY)").alignment(Alignment::Center)),
+        ListItem::new(Line::from("澳元 (AUD)").alignment(Alignment::Center)),
+        ListItem::new(Line::from("阿根廷比索 (ARS)").alignment(Alignment::Center)),
+        ListItem::new(Line::from("印度卢比 (INR)").alignment(Alignment::Center)),
+        ListItem::new(Line::from("英镑 (GBP)").alignment(Alignment::Center)),
+        ListItem::new(Line::from("土耳其里拉 (TRY)").alignment(Alignment::Center)),
     ];
 
     // 创建 List 小部件
@@ -103,8 +108,8 @@ pub fn ui(frame: &mut Frame, app: &App) {
             .borders(Borders::ALL)
         );
 
-    // 渲染 List 到布局
-    frame.render_widget(list, down_left_up_layout[1]);
+    // 渲染 List 货币 到布局
+    frame.render_widget(list, list_layout[1]);
     // 下右布局内容
     // 在 ui.rs 中，修改 footer 代码以显示汇率
     let rates_display = app
