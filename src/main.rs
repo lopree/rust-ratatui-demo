@@ -21,7 +21,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-
+    // 设置窗口大小
+    execute!(terminal.backend_mut(), crossterm::terminal::SetSize(140, 85))?;
     // Create app and run it
     let mut app = App::new();
     run_app(&mut terminal, &mut app)?;
@@ -56,12 +57,27 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) ->Result<(), B
                     KeyCode::Char(c) => {
                         app.amount_input.push(c); // 添加字符到输入中
                     }
+                    KeyCode::Up => {
+                        app.selected_index += 1;
+                        if app.selected_index > 8 {
+                            app.selected_index = 1; // 超过8则变为1
+                        }
+                    }
+                    KeyCode::Down => {
+                        if app.selected_index == 1 {
+                            app.selected_index = 8; // 小于1则变为8
+                        } else {
+                            app.selected_index -= 1;
+                        }
+                    }
                     KeyCode::Backspace => {
                         app.amount_input.pop(); // 删除最后一个字符
                     }
                     KeyCode::Esc => {
                         app.current_screen = crate::app::CurrentScreen::Exiting; // 退出
                     }
+                    //更换币种
+
                     _ => {}
                 },
                 _ => {}

@@ -21,8 +21,8 @@ pub fn ui(frame: &mut Frame, app: &App) {
     let down_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(vec![
-            Constraint::Percentage(20),
-            Constraint::Percentage(80),
+            Constraint::Percentage(30),
+            Constraint::Percentage(70),
         ])
         .split(chunks[1]);
     let down_left_layout = Layout::default()
@@ -85,7 +85,19 @@ pub fn ui(frame: &mut Frame, app: &App) {
         .collect();
 
     // 创建第二个 List 小部件
-    let number_list = List::new(number_items)
+    // let number_list = List::new(number_items)
+    //     .block(Block::default().borders(Borders::ALL));
+
+
+    let items: Vec<ListItem> = (1..=8)
+        .map(|i| {
+            let line = Line::styled(format!("{}", i),
+                                    if i== app.selected_index { Color::Red } else { Color::White }).alignment(Alignment::Center); // 根据选中状态改变颜色
+            ListItem::new(line)
+        })
+        .collect();
+
+    let number_list = List::new(items)
         .block(Block::default().borders(Borders::ALL));
     frame.render_widget(number_list, list_layout[0]);
     //
@@ -120,7 +132,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
         .join(", ");
 
     let footer = Paragraph::new(Text::styled(
-        format!("汇率: {}", rates_display),
+        format!("汇率: {},{}", rates_display,&app.selected_index),
         Style::default().fg(Color::Yellow),
     ))
         .style(Style::default().bg(Color::Black))

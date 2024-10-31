@@ -22,6 +22,7 @@ pub struct App {
     pub target_currency: String,     // 目标货币
     pub converted_amount: String, // 转换后的金额
     pub exchange_rates: HashMap<String, f64>, // 存储汇率
+    pub selected_index: usize, // 新增选中的索引
 }
 
 impl App {
@@ -37,6 +38,7 @@ impl App {
             target_currency: String::new(),
             converted_amount: String::new(),
             exchange_rates: HashMap::new(), // 初始化汇率 HashMap
+            selected_index: 1,
         };
 
         // 在应用启动时获取汇率
