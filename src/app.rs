@@ -1,4 +1,4 @@
-﻿use std::{collections::HashMap, error::Error};
+﻿use std::{collections::HashMap, error::Error, fs};
 use reqwest::blocking::get;
 use serde_json::Value;
 pub enum CurrentScreen {
@@ -40,32 +40,47 @@ impl App {
         };
 
         // 在应用启动时获取汇率
-        let supported_currencies = vec!["USD", "JPY", "AUD", "ARS", "INR", "GBP", "TRY"];
-        for currency in supported_currencies {
-            if let Ok(rate) = app.fetch_exchange_rate(currency) {
-                app.exchange_rates.insert(currency.to_string(), rate);
+        match app.fetch_exchange_rate() {
+            Ok(rates) => {
+                app.exchange_rates = rates; // 将获取到的汇率存入 app 的 exchange_rates
+            }
+            Err(err) => {
+                eprintln!("获取汇率时出错: {}", err);
             }
         }
 
         app
     }
 
-    pub fn fetch_exchange_rate(&self, target_currency: &str) -> Result<f64, Box<dyn Error>> {
-        // 汇率 API 的 URL
-        let url = "https://api.exchangerate-api.com/v4/latest/CNY".to_string(); // 假设以人民币为基准
-        let response: Value = get(&url)?.json()?;
-
-        // 查找目标货币的汇率
+    pub fn fetch_exchange_rate(&mut self) -> Result<HashMap<String, f64>, Box<dyn Error>> {
+        let file_path = "resources/exchange_rates.json";
         let supported_currencies = vec!["USD", "JPY", "AUD", "ARS", "INR", "GBP", "TRY"];
-        if supported_currencies.contains(&target_currency) {
-            if let Some(rate) = response["rates"][target_currency].as_f64() {
-                Ok(rate)
-            } else {
-                Err("不支持的货币".into())
-            }
-        } else {
-            Err("不支持的货币".into())
+
+        // 如果文件存在，则读取文件
+        if let Ok(contents) = fs::read_to_string(file_path) {
+            let rates: Value = serde_json::from_str(&contents)?;
+            return self.extract_rates(&rates, &supported_currencies);
         }
+
+        // 如果文件不存在，则从 API 获取汇率
+        let url = "https://api.exchangerate-api.com/v4/latest/CNY";
+        let response: Value = get(url)?.json()?;
+
+        // 将获取到的汇率保存到文件
+        fs::write(file_path, response.to_string())?;
+
+        self.extract_rates(&response, &supported_currencies) // 返回从 API 获取的汇率
+    }
+
+    // 提取汇率的方法
+    fn extract_rates(&self, rates: &Value, supported_currencies: &[&str]) -> Result<HashMap<String, f64>, Box<dyn Error>> {
+        let mut exchange_rates = HashMap::new();
+        for currency in supported_currencies {
+            if let Some(rate) = rates["rates"][currency].as_f64() {
+                exchange_rates.insert(currency.to_string(), rate);
+            }
+        }
+        Ok(exchange_rates)
     }
 
     pub fn convert_currency(&mut self) -> Result<(), Box<dyn Error>> {
